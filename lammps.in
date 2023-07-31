@@ -1,0 +1,94 @@
+
+
+units           metal
+boundary        p p p
+atom_style      atomic
+
+neighbor        2.0 bin
+neigh_modify    every 10 delay 0 check no
+
+read_data       coord.lmp
+
+pair_style	deepmd	./graph.pb
+pair_coeff      * *	
+
+variable	run1	equal	60000
+variable	run2	equal	60000
+variable	run3	equal	120000
+variable	run4	equal	60000
+variable	run5	equal	180000
+variable	run6	equal	2000000
+
+variable	temp1	equal	300.0
+variable	temp2	equal	1500.0
+variable	temp3	equal	600.0
+
+variable	dt	equal	5.0e-4
+variable	tau	equal	${dt}*100
+variable	showt	equal	1000
+
+
+velocity	all create ${temp1} 12345
+dump            1 all custom ${showt} lammps.dump id type x y z
+
+fix             1 all nvt temp ${temp1} ${temp2} ${tau}
+timestep        ${dt}
+thermo_style    custom step pe ke etotal temp press vol
+thermo         	${showt}
+run     	${run1}
+write_restart   nvt1.restart
+unfix           1
+
+
+fix             2 all nvt temp ${temp2} ${temp2} ${tau}
+timestep        ${dt}
+thermo_style    custom step pe ke etotal temp press vol
+thermo         	${showt}
+run     	${run2}
+write_restart   nvt2.restart
+unfix           2
+
+
+fix             3 all nvt temp ${temp2} ${temp1} ${tau}
+timestep        ${dt}
+thermo_style    custom step pe ke etotal temp press vol
+thermo         	${showt}
+run     	${run3}
+write_restart   nvt3.restart
+unfix           3
+
+
+
+fix             4 all nvt temp ${temp1} ${temp1} ${tau}
+timestep        ${dt}
+thermo_style    custom step pe ke etotal temp press vol
+thermo         	${showt}
+restart         5000 amorphous.restart
+run     	${run4}
+write_restart   nvt4.restart
+unfix           4
+
+
+##### s4-Amo-600K: to increase temperature up to 600K
+
+fix             5 all nvt temp ${temp1} ${temp3} ${tau}
+timestep        ${dt}
+thermo_style    custom step pe ke etotal temp press vol
+thermo         	${showt}
+run     	${run5}
+write_restart   nvt5.restart
+unfix           5
+
+
+#### s8-Amo to crys: stable a time in 600K
+
+fix             6 all nvt temp ${temp3} ${temp3} ${tau}
+timestep        ${dt}
+thermo_style    custom step pe ke etotal temp press vol
+thermo         	${showt}
+restart         20000 smc.restart
+run     	${run6}
+write_restart   nvt6.restart
+unfix           6
+
+
